@@ -97,3 +97,89 @@ Create a ```GET``` endpoint that retrieves all providers by their specialty
 
 
 ## NOTE: Do not fork this repository
+// server.js
+
+// Load environment variables from .env
+require('dotenv').config();
+
+const express = require('express');
+const mysql = require('mysql');
+
+// Create Express app
+const app = express();
+
+// Create a connection to the MySQL database
+const connection = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
+});
+
+// Connect to the database
+connection.connect((err) => {
+    if (err) {
+        console.error('Error connecting to the database:', err.stack);
+        return;
+    }
+    console.log('Connected to the database as ID:', connection.threadId);
+});
+
+// Retrieve all patients
+app.get('/patients', (req, res) => {
+    const query = 'SELECT patient_id, first_name, last_name, date_of_birth FROM patients';
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error retrieving patients' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+// Retrieve all providers
+app.get('/providers', (req, res) => {
+    const query = 'SELECT first_name, last_name, provider_specialty FROM providers';
+    connection.query(query, (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error retrieving providers' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+// Filter patients by first name
+app.get('/patients/:first_name', (req, res) => {
+    const firstName = req.params.first_name;
+    const query = 'SELECT patient_id, first_name, last_name, date_of_birth FROM patients WHERE first_name = ?';
+    connection.query(query, [firstName], (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error retrieving patients' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+// Retrieve all providers by their specialty
+app.get('/providers/specialty/:specialty', (req, res) => {
+    const specialty = req.params.specialty;
+    const query = 'SELECT first_name, last_name, provider_specialty FROM providers WHERE provider_specialty = ?';
+    connection.query(query, [specialty], (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Error retrieving providers' });
+        } else {
+            res.status(200).json(results);
+        }
+    });
+});
+
+// Start the Express server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
+
